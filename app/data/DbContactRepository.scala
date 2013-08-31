@@ -35,6 +35,11 @@ object DbContactRepository {
     }
   }
 
-  def list(): Seq[Contact] = ???
+  def list(): Seq[Contact] = {
+    DB.withConnection { implicit conn =>
+      SQL("SELECT id, name, email, isFavorite FROM Contact;")
+        .list(contactRowMapper)
+    }
+  }
 
 }
