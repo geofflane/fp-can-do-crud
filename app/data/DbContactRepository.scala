@@ -18,14 +18,20 @@ object DbContactRepository {
     }
   }
 
+  val contactRowMapper = {
+    long("id") ~
+      str("name") ~
+      str("email") ~
+      bool("isFavorite") map {
+      case i~n~k~f => Contact(Some(i), n, k, f)
+    }
+  }
+
   def get(id: Long): Option[Contact] = {
     DB.withConnection { implicit conn =>
       SQL("SELECT id, name, email, isFavorite FROM Contact WHERE id = {id};")
         .on("id" -> id)
-        .single {
-          case Row(i:Long, n:String, e:String, f:Boolean) => Some(Contact(Some(i), n, e, f))
-          case _ => None
-        }
+        .as(contactRowMapper.singleOpt)
     }
   }
 
