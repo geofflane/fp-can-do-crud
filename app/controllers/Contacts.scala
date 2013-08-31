@@ -35,14 +35,12 @@ trait ContactsController {
     Ok(views.html.Contacts.list(contacts))
   }
 
-  implicit val contactWrites = new Writes[Contact] {
-    def writes(c: Contact): JsValue = JsObject(Seq(
-      "id" -> JsNumber(c.id.get),
-      "name" -> JsString(c.name),
-      "email" -> JsString(c.email),
-      "isFavorite" -> JsBoolean(c.isFavorite)
-    ))
-  }
+  implicit val contactWrites = (
+      (__ \ "id").write[Option[Long]] ~
+      (__ \ "name").write[String] ~
+      (__ \ "email").write[String] ~
+      (__ \ "isFavorite").write[Boolean]
+    )(unlift(Contact.unapply))
 
   def get(id: Long) = Action { implicit request =>
     def contact = contactRepository.get(id)
