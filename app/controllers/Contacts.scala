@@ -7,6 +7,8 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import scala.language.reflectiveCalls
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * @author geoff
@@ -33,10 +35,27 @@ trait ContactsController {
     Ok(views.html.Contacts.list(contacts))
   }
 
-  def get(id: Long) = Action {
-    contactRepository.get(id) match {
-      case Some(c) => Ok(views.html.Contacts.show(c))
-      case None => NotFound(views.html.index.render("Not found"))
+  implicit val contactWrites = new Writes[Contact] {
+    def writes(c: Contact): JsValue = JsObject(Seq(
+      "id" -> JsNumber(c.id.get),
+      "name" -> JsString(c.name),
+      "email" -> JsString(c.email),
+      "isFavorite" -> JsBoolean(c.isFavorite)
+    ))
+  }
+
+  def get(id: Long) = Action { implicit request =>
+    def contact = contactRepository.get(id)
+
+    render {
+      case Accepts.Html() => contact match {
+        case Some(c) => Ok(views.html.Contacts.show(c))
+        case None => NotFound(views.html.index.render("Not found"))
+      }
+      case Accepts.Json() => contact match {
+        case Some(c) => Ok(Json.toJson(c))
+        case None => NotFound(Json.toJson("No such contact"))
+      }
     }
   }
 
