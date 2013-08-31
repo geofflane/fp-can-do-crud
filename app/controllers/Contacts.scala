@@ -9,6 +9,8 @@ import play.api.data.validation.Constraints._
 import scala.language.reflectiveCalls
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.ws.WS
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * @author geoff
@@ -42,15 +44,28 @@ trait ContactsController {
       (__ \ "isFavorite").write[Boolean]
     )(unlift(Contact.unapply))
 
-  def get(id: Long) = Action { implicit request =>
-    def contact = contactRepository.get(id)
+  implicit val contactReads = (
+      (__ \ "id").read[Option[Long]] ~
+      (__ \ "name").read[String] ~
+      (__ \ "email").read[String] ~
+      (__ \ "isFavorite").read[Boolean]
+    )(Contact.apply _)
 
+  def get(id: Long) = Action { implicit request =>
     render {
-      case Accepts.Html() => contact match {
-        case Some(c) => Ok(views.html.Contacts.show(c))
-        case None => NotFound(views.html.index.render("Not found"))
+      case Accepts.Html() => {
+        Async {
+          WS.url("http://localhost:9000/contacts/%d".format(id))
+            .withHeaders("Accept" -> "application/json")
+            .get().map { response =>
+            Json.fromJson(response.json).asOpt match {
+              case Some(c:Contact) => Ok(views.html.Contacts.show(c))
+              case None => NotFound(views.html.index.render("Not found"))
+            }
+          }
+        }
       }
-      case Accepts.Json() => contact match {
+      case Accepts.Json() => contactRepository.get(id) match {
         case Some(c) => Ok(Json.toJson(c))
         case None => NotFound(Json.toJson("No such contact"))
       }
