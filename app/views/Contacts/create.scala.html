@@ -1,0 +1,15 @@
+@(contactForm: Form[Contact])
+@import helper.twitterBootstrap._
+
+@main("Add a contact") {
+
+    @helper.form(action = routes.Contacts.save()) {
+        @helper.inputText(contactForm("name"), '_label -> "Name")
+        @helper.inputText(contactForm("email"), '_label -> "Email")
+
+        <div class="actions">
+            <input type="submit" class="btn primary" value="Create">
+        </div>
+    }
+
+}

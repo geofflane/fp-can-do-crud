@@ -1,0 +1,13 @@
+@(contacts: Seq[Contact])
+
+@main("Presentation") {
+    @if(contacts.isEmpty) {
+    <h3>No Contacts Found</h3>
+    } else {
+    <ul>
+        @for(contact <- contacts) {
+        <li><a href="@routes.Contacts.get(contact.id.get)">@contact.name</a></li>
+        }
+    </ul>
+    }
+}
