@@ -11,11 +11,10 @@ object DbContactRepository {
 
   def save(contact: Contact): Option[Contact] = {
     DB.withConnection { implicit conn =>
-      val id:Option[Long] = SQL("INSERT INTO Contact (name, email, isFavorite) VALUES({name}, {email}, {isFavorite});")
+      SQL("INSERT INTO Contact (name, email, isFavorite) VALUES({name}, {email}, {isFavorite});")
         .on("name" -> contact.name, "email" -> contact.email, "isFavorite" -> contact.isFavorite)
-        .executeInsert()
-
-      id.map(i => Contact(Some(i), contact.name, contact.email, contact.isFavorite))
+        .executeInsert[Option[Long]]()
+        .map(i => Contact(Some(i), contact.name, contact.email, contact.isFavorite))
     }
   }
 
